@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ARTBID – ตลาดประมูลงานศิลปะ</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&family=Noto+Sans+Thai:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+<style>
+:root{--ink:#4a2872;--bg:#efe3f8;--card:#fff;--pink:#c4246f;--mint:#12b79a;--line:#e4d3f2;--muted:#85739f;--btn:#6a3a92;--g:linear-gradient(90deg,#e8267f,#a02a9c)}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Noto Sans Thai',sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+h1,h2,h3,.logo{font-family:'Prompt',sans-serif}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:.6rem 1.3rem;background:var(--pink);color:#fff;font-weight:500}
+button:hover{filter:brightness(1.08)}
+button.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+:focus-visible{outline:3px solid var(--mint);outline-offset:2px}
+input,textarea,select{width:100%;padding:.7rem .9rem;margin:.3rem 0 1rem;border:1.5px solid var(--line);border-radius:12px;font:inherit;background:#fff}
+label{font-weight:500}
+.navbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.8rem 5vw;background:var(--ink);color:#fff;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.logo{font-weight:700;font-size:1.4rem;letter-spacing:.04em;cursor:pointer}
+.menu{display:flex;gap:1.2rem;flex-wrap:wrap}
+.menu a{color:#fff;text-decoration:none;opacity:.85}
+.menu a:hover,.menu a.on{opacity:1;text-decoration:underline;text-underline-offset:6px;text-decoration-color:var(--pink)}
+.page{display:none;max-width:1000px;margin:0 auto;padding:2.5rem 5vw}
+.page.active{display:block}
+.hero{text-align:center;padding:4rem 1rem}
+.hero h2{font-size:clamp(2rem,6vw,3.4rem);line-height:1.2;margin-bottom:.8rem}
+.hero p{color:var(--muted);margin-bottom:1.5rem}
+.art-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.2rem;margin-top:1rem}
+.art-card{background:var(--card);border-radius:18px;padding:1rem;border:1px solid var(--line);display:flex;flex-direction:column;gap:.2rem}
+.art-image,.art-photo{aspect-ratio:1;width:100%;border-radius:12px;object-fit:cover;background:linear-gradient(135deg,#ffd6e5,#d7ccff);display:grid;place-items:center;font-size:4rem;margin-bottom:.5rem}
+.art-card strong{font-size:1.3rem;color:var(--pink)}
+.art-card button{margin-top:.6rem}
+.muted{color:var(--muted)}
+.artist-cover{height:160px;border-radius:18px;background:linear-gradient(120deg,var(--pink),#7a5cff)}
+.artist-info{display:flex;align-items:center;gap:1rem;margin:-2.5rem 1rem 1rem;flex-wrap:wrap}
+.artist-avatar{width:84px;height:84px;border-radius:50%;background:#fff;border:4px solid var(--bg);display:grid;place-items:center;font-size:2.4rem}
+.artist-info>div:nth-child(2){flex:1;padding-top:2rem}
+.artist-info button{margin-top:2rem}
+.artist-stats{display:flex;gap:2rem;margin:1rem;flex-wrap:wrap}
+.artist-stats div{display:flex;flex-direction:column}
+.artist-stats strong{font-size:1.4rem}
+.artist-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.8rem;margin-top:1rem}
+.artist-gallery div{aspect-ratio:1;border-radius:12px;background:linear-gradient(135deg,#ffd6e5,#d7ccff);display:grid;place-items:center;font-size:2.5rem}
+.upload-box{border:2px dashed var(--line);border-radius:18px;padding:2rem;text-align:center;background:#fff;margin:1rem 0 1.5rem}
+.upload-icon{font-size:3rem}
+.upload-box img{max-width:200px;border-radius:12px;margin-top:1rem}
+.auction{text-align:center}
+.auction-picture{width:min(100%,380px);aspect-ratio:1;margin:1rem auto;border-radius:18px;background:linear-gradient(135deg,#ffd6e5,#d7ccff);display:grid;place-items:center;font-size:6rem;overflow:hidden}
+.auction-picture img{width:100%;height:100%;object-fit:cover}
+#price{font-size:3rem;color:var(--pink)}
+#timer{font-variant-numeric:tabular-nums;margin-bottom:1rem}
+.form-box{max-width:420px;margin:0 auto;background:#fff;padding:2rem;border-radius:18px;border:1px solid var(--line)}
+.form-box h2{margin-bottom:.3rem}
+.form-box>p{margin-bottom:1rem;color:var(--muted)}
+.form-box button{width:100%;margin-bottom:.5rem}
+.msg{min-height:1.5rem;margin-top:.5rem;font-size:.95rem}
+.msg.err{color:#d6204f}.msg.ok{color:var(--mint)}
+.sr-only{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.btn{display:inline-block;cursor:pointer;border-radius:999px;padding:.6rem 1.3rem;background:var(--pink);color:#fff;font-weight:500}
+.sr-only:focus-visible + .btn{outline:3px solid var(--mint);outline-offset:2px}
+.art-card{position:relative}
+.heart{position:absolute;top:1.3rem;right:1.3rem;width:42px;height:42px;padding:0;border-radius:50%;background:#fff;color:var(--muted);font-size:1.3rem;line-height:1;box-shadow:0 2px 8px rgba(42,23,68,.2)}
+.heart.on,#fav-btn.on{color:var(--pink)}
+#fav-btn{margin-bottom:.5rem}
+#fav-btn.on{border-color:var(--pink)}
+.upload-box.drag{border-color:var(--pink);background:#fff0f5}
+hr{border:0;border-top:1px solid var(--line);margin:1.2rem 0}
+
+/* ===== ARTBID v2: ธีมใหม่ + responsive ===== */
+body{background:radial-gradient(circle at 0 0,#e2c8f3 0,transparent 45%),radial-gradient(circle at 100% 25%,#d9c4f1 0,transparent 40%),radial-gradient(circle at 20% 100%,#f1cfe8 0,transparent 40%),var(--bg);background-attachment:fixed;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px));min-height:100vh}
+button{background:var(--btn)}
+.topbar{position:sticky;top:0;z-index:10;padding-top:env(safe-area-inset-top,0px);background:rgba(253,250,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.navbar{position:static;background:none;color:var(--ink);padding:.7rem 4vw;display:flex;flex-wrap:wrap;align-items:center;gap:.6rem}
+.brand{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--ink);font:700 1.4rem Prompt,sans-serif;letter-spacing:.03em;margin-right:auto}
+.brand svg{width:34px;height:30px}
+.menu{display:none}
+.menu a{color:var(--ink);text-decoration:none}
+.search{order:5;flex:1 0 100%;position:relative}
+.search input{margin:0;padding:.55rem 2.4rem .55rem 1rem;border-radius:999px}
+.search span{position:absolute;right:.9rem;top:50%;transform:translateY(-50%);pointer-events:none}
+.icon-btn{width:40px;height:40px;padding:0;background:#fff;border:1px solid var(--line);opacity:.5;cursor:not-allowed}
+.login-btn{background:var(--g);padding:.5rem 1.1rem}
+.page{max-width:1240px;padding:1.5rem 4vw}
+.home h1{font-size:clamp(1.6rem,5vw,2.8rem);line-height:1.25;margin-bottom:.5rem}
+.home-top{display:grid;gap:1.2rem;margin-bottom:1.8rem}
+.intro p{color:var(--muted);margin-bottom:1rem}
+.feature{background:linear-gradient(135deg,#fff,#f4e9fb);border-radius:22px;padding:.8rem;box-shadow:0 10px 30px rgba(91,42,134,.12)}
+.feature .art-image,.feature .art-photo{aspect-ratio:16/11;border-radius:16px;font-size:6rem;margin:0}
+.feature-info{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.8rem .4rem .2rem;flex-wrap:wrap}
+.feature-info strong,.art-card strong{color:var(--pink);font:700 1.4rem Prompt,sans-serif}
+.cd{font-variant-numeric:tabular-nums}
+.sec{display:flex;align-items:center;gap:.6rem;margin:1.6rem 0 .6rem}
+.tag{font:500 .7rem 'Noto Sans Thai',sans-serif;background:#efe4fa;color:var(--btn);padding:.1rem .6rem;border-radius:999px;vertical-align:middle}
+.badge{position:absolute;left:1.3rem;top:1.3rem;z-index:1;background:var(--g);color:#fff;font-size:.72rem;padding:.1rem .6rem;border-radius:999px}
+.art-grid{grid-template-columns:repeat(2,1fr);gap:.8rem}
+.art-card{border-radius:20px;border:0;box-shadow:0 8px 24px rgba(106,58,146,.12)}
+.art-card:nth-child(3n+1) .art-image{border-bottom:5px solid #c4246f}
+.art-card .heart{margin:0}
+.art-card h3{font-size:1rem}
+.artists{display:flex;gap:.8rem;overflow-x:auto;padding-bottom:.4rem}
+.artist-chip{flex:0 0 auto;display:flex;align-items:center;gap:.6rem;background:#fff;border-radius:16px;padding:.6rem 1.2rem .6rem .6rem;color:var(--ink);text-align:left}
+.artist-chip i{font-style:normal;width:44px;height:44px;border-radius:50%;background:#efe4fa;display:grid;place-items:center;font-size:1.4rem}
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:space-around;align-items:flex-end;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -6px 24px rgba(91,42,134,.12);padding:.5rem .5rem calc(.5rem + env(safe-area-inset-bottom,0px))}
+.bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:.1rem;color:var(--muted);text-decoration:none;font-size:.72rem;min-width:56px}
+.bottom-nav i{font-style:normal;font-size:1.3rem}
+.bottom-nav a.on{color:var(--btn);font-weight:600}
+.bottom-nav .center i{width:52px;height:52px;margin-top:-26px;border-radius:50%;background:var(--btn);color:#fff;display:grid;place-items:center;font-size:1.6rem;box-shadow:0 6px 16px rgba(91,42,134,.4)}
+@media (min-width:480px){.art-grid{grid-template-columns:repeat(3,1fr)}}
+@media (min-width:900px),(min-width:640px) and (orientation:landscape){
+  body{padding-bottom:0}
+  .bottom-nav{display:none}
+  .menu{display:flex;gap:1.4rem;margin:0 auto 0 1.5rem}
+  .menu a{opacity:.8}
+  .menu a.on{opacity:1;color:var(--pink);font-weight:600;text-decoration:none}
+  .brand{margin-right:0}
+  .search{order:0;flex:0 0 260px}
+  .navbar{flex-wrap:nowrap;padding:.8rem 5vw}
+  .home-top{grid-template-columns:minmax(0,1fr) minmax(0,1.7fr);align-items:center;gap:2.5rem}
+  .art-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1.2rem}
+  .feature .art-image,.feature .art-photo{aspect-ratio:16/9}
+}
+.star{background:none;color:#d9c6ea;font-size:1.9rem;padding:0 .1rem;border-radius:0;line-height:1}
+.star.on{color:#f5a623}
+.stars-s{color:#f5a623;letter-spacing:.05em}
+#order-box{max-width:420px;margin:1rem auto;background:#fff;padding:1rem;border-radius:16px;box-shadow:0 6px 20px rgba(106,58,146,.1)}
+#order-box:empty{display:none}
+#order-box textarea{margin-bottom:.5rem}
+.reviews{max-width:560px;margin:1.5rem auto;text-align:left}
+.review{background:#fff;border-radius:14px;padding:.8rem 1rem;margin:.6rem 0}
+.by{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.login-btn{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.artists-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.8rem;margin-top:1rem}
+.artists-grid .artist-chip{width:100%}
+#me-artist button{margin-top:.4rem}
+.tip-actions{display:flex;gap:.6rem;margin:0 1rem 1rem;flex-wrap:wrap}
+.tip-actions button{padding:.5rem 1.1rem}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(42,23,68,.5);display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal[hidden]{display:none}
+.modal-box{position:relative;background:#fff;border-radius:22px;padding:1.4rem 1.2rem;width:100%;max-width:440px;max-height:90vh;overflow:auto}
+.modal-x{position:absolute;right:.7rem;top:.7rem;width:36px;height:36px;padding:0;background:#f1e8f9;color:var(--ink)}
+.modal-box h3{margin-bottom:.3rem;padding-right:2rem}
+.modal-box label{display:block;margin-top:.6rem}
+.modal-box>div>button,.modal-box button.full{width:100%;margin-top:.5rem}
+.chip-row{display:flex;gap:.5rem;flex-wrap:wrap;margin:.4rem 0 .6rem}
+.chip{background:#f1e8f9;color:var(--ink);padding:.45rem 1rem}
+.chip.on{background:var(--btn);color:#fff}
+.warn{background:#fff4e0;border:1px solid #f2c97d;border-radius:12px;padding:.6rem .8rem;margin:.6rem 0;font-size:.9rem}
+.sum{width:100%;border-collapse:collapse;margin:.6rem 0}
+.sum td{padding:.35rem 0;border-bottom:1px solid var(--line);font-size:.95rem}
+.sum td:last-child{text-align:right}
+.sum tr.tot td{font-weight:700;border-bottom:0}
+.dash-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.8rem;margin:1rem 0}
+.dash-card{background:#fff;border-radius:18px;padding:1rem;box-shadow:0 6px 20px rgba(106,58,146,.1)}
+.dash-card strong{display:block;font:700 1.6rem Prompt,sans-serif;color:var(--pink)}
+.tx{background:#fff;border-radius:14px;padding:.7rem 1rem;margin:.5rem 0;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.terms{max-height:48vh;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:.8rem;font-size:.9rem;margin:.6rem 0;background:#fcfaff}
+.terms h4{margin:.9rem 0 .3rem;font-family:Prompt,sans-serif}
+.terms p,.terms li{margin:.3rem 0}
+.terms table{width:100%;border-collapse:collapse;margin:.4rem 0;font-size:.85rem}
+.terms th,.terms td{border:1px solid var(--line);padding:.3rem .4rem;text-align:left}
+.idbox code{background:#f1e8f9;padding:.1rem .4rem;border-radius:6px;font-size:.8rem}
+.idbox .chip{padding:.2rem .7rem;font-size:.8rem;margin-left:.3rem}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <nav class="navbar">
+    <a class="brand" href="#home" onclick="showPage('home');return false">
+      <svg viewBox="160 170 730 635" aria-hidden="true"><defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#ea1c80"/><stop offset="1" stop-color="#7a12b5"/></linearGradient></defs><path fill="url(#lg)" d="M525 175L885 798H669L611 697H708L525 380L343 697H441L525 551L583 652L499 798H165Z"/></svg>
+      <span>ARTBID</span>
+    </a>
+    <div class="menu">
+      <a href="#home" data-link="home">หน้าแรก</a>
+      <a href="#gallery" data-link="gallery">ประมูล</a>
+      <a href="#artists" data-link="artists">นักวาด</a>
+      <a href="#favorites" data-link="favorites">♥ โปรด</a>
+      <a href="#upload" data-link="upload">ลงผลงาน</a>
+    </div>
+    <div class="search"><input id="q" type="search" placeholder="ค้นหาผลงาน ศิลปิน หรือรหัสศิลปิน" aria-label="ค้นหาผลงาน ศิลปิน หรือรหัสศิลปิน"><span>🔍</span></div>
+    <button class="icon-btn" disabled title="การแจ้งเตือน (ยังไม่เปิดใช้งาน)" aria-label="การแจ้งเตือน (ยังไม่เปิดใช้งาน)">🔔</button>
+    <button class="login-btn" id="auth-btn" onclick="authButton()">เข้าสู่ระบบ</button>
+  </nav>
+</header>
+
+<main>
+<!-- หน้าแรก -->
+<section class="page home" id="page-home">
+  <div class="home-top">
+    <div class="intro">
+      <h1>ค้นพบผลงานศิลปะที่คุณรัก</h1>
+      <p>ประมูล ซื้อ และติดตามนักวาดที่คุณชื่นชอบ</p>
+      <button onclick="showPage('gallery')">เริ่มสำรวจ</button>
+    </div>
+    <div class="feature" id="feature"></div>
+  </div>
+  <div class="sec"><h2>Popular Auctions</h2></div>
+  <div class="art-grid" id="popular"></div>
+  <div class="sec"><h2>ศิลปินแนะนำ</h2><a class="by muted" href="#artists" onclick="showPage('artists');return false">ดูทั้งหมด</a></div>
+  <div class="artists" id="artists-rec"></div>
+</section>
+
+<!-- รายการประมูล -->
+<section class="page" id="page-gallery">
+  <h2>🛍️ ผลงานที่เปิดขาย</h2>
+  <div id="search-artists"></div>
+  <div class="art-grid" id="art-grid"></div>
+</section>
+
+<!-- รายการโปรด -->
+<section class="page" id="page-favorites">
+  <h2>♥ รายการโปรดของฉัน</h2>
+  <div class="art-grid" id="fav-grid"></div>
+</section>
+
+<!-- ศิลปินที่ลงทะเบียน -->
+<section class="page" id="page-artists">
+  <h2>🎨 ศิลปินที่ลงทะเบียน</h2>
+  <p class="muted">นักวาดที่ลงทะเบียนเป็นศิลปินบน ARTBID</p>
+  <div class="artists-grid" id="artists-grid"></div>
+</section>
+
+<!-- โปรไฟล์ของฉัน -->
+<section class="page" id="page-me">
+  <div class="form-box" style="max-width:520px">
+    <h2>👤 โปรไฟล์ของฉัน</h2>
+    <p id="me-info" class="muted"></p>
+    <hr>
+    <div id="me-links"></div>
+    <div id="me-artist"></div>
+    <p class="msg" id="me-message"></p>
+    <hr>
+    <button type="button" class="ghost" onclick="logout()">ออกจากระบบ</button>
+  </div>
+</section>
+
+<!-- แดชบอร์ดศิลปิน -->
+<section class="page" id="page-dash">
+  <h2>📊 แดชบอร์ดศิลปิน</h2>
+  <p class="muted">ยอดสนับสนุน Tip และ Donate แยกจากยอดขายและประมูล ไม่หักค่าธรรมเนียมแพลตฟอร์ม · จ่ายเงินรอบวันที่ 1–5 ของทุกเดือน</p>
+  <div class="warn" id="dash-warn"></div>
+  <div class="dash-cards">
+    <div class="dash-card"><span class="muted">ยอดที่ได้รับ</span><strong id="d-recv">฿0</strong></div>
+    <div class="dash-card"><span class="muted">ยอดเงินที่รอจ่าย</span><strong id="d-pend">฿0</strong></div>
+    <div class="dash-card"><span class="muted">จ่ายแล้ว</span><strong id="d-paid">฿0</strong></div>
+  </div>
+  <h3>รายการรับเงินสนับสนุน</h3>
+  <div id="dash-list"></div>
+</section>
+
+<!-- ประวัติการสนับสนุนของฉัน -->
+<section class="page" id="page-mytips">
+  <h2>🧾 ประวัติการสนับสนุนของฉัน</h2>
+  <div id="mytips-list"></div>
+</section>
+
+<!-- โปรไฟล์นักวาด -->
+<section class="page artist-profile" id="page-artist">
+  <div class="artist-cover"></div>
+  <div class="artist-info">
+    <div class="artist-avatar">👩‍🎨</div>
+    <div><h2 id="artist-name"></h2><p id="artist-handle" class="muted"></p><p id="artist-id" class="muted" style="font-size:.8rem;word-break:break-all"></p></div>
+    <button id="follow-btn" onclick="toggleFollow()">♡ ติดตาม</button>
+  </div>
+  <div class="artist-stats">
+    <div><strong id="st-works">0</strong><span class="muted">ผลงาน</span></div>
+    <div><strong id="st-follow">0</strong><span class="muted">ผู้ติดตาม</span></div>
+    <div><strong id="st-rate">-</strong><span class="muted">คะแนนรีวิว</span></div>
+  </div>
+ <div class="tip-actions" id="tip-actions">
+    <button type="button" onclick="openTip('tip')">💝 Tip</button>
+    <button type="button" class="ghost" onclick="openTip('donate')">🎁 Donate</button>
+  </div>
+  <h2>🎨 ผลงานทั้งหมด</h2>
+  <div class="art-grid" id="artist-grid"></div>
+</section>
+
+<!-- ลงผลงาน -->
+<section class="page upload-page" id="page-upload">
+  <h2>🎨 ลงผลงานใหม่</h2>
+  <p class="muted">สร้างผลงานและเปิดให้ผู้ชมเข้ามาประมูล</p>
+  <div class="upload-box">
+    <div class="upload-icon">🖼️</div>
+    <h3>อัปโหลดภาพของคุณ</h3>
+    <p class="muted">ลากไฟล์มาวางที่นี่ หรือกดปุ่มเลือกภาพ (PNG, JPG, WEBP)</p>
+    <input id="file-input" class="sr-only" type="file" accept="image/*">
+    <label for="file-input" class="btn">เลือกภาพ</label>
+    <div id="preview"></div>
+  </div>
+
+  <label for="art-title">ชื่อผลงาน</label>
+  <input id="art-title" type="text" placeholder="เช่น Fantasy Princess">
+
+  <label for="art-desc">รายละเอียด</label>
+  <textarea id="art-desc" rows="3" placeholder="บอกเกี่ยวกับผลงานของคุณ..."></textarea>
+
+  <label for="art-sale">รูปแบบการขาย</label>
+  <select id="art-sale" onchange="saleChange()">
+    <option value="auction">ประมูล</option>
+    <option value="regular">ขายทั่วไป (ราคาคงที่)</option>
+  </select>
+
+  <label for="art-price" id="art-price-label">ราคาเริ่มต้น (บาท)</label>
+  <input id="art-price" type="number" min="1" placeholder="100">
+
+  <label for="art-type">ประเภทผลงาน</label>
+  <select id="art-type">
+    <option>งานต้นฉบับ</option><option>งานพิมพ์</option><option>งานดิจิทัล</option>
+    <option>สร้างด้วย AI</option><option>มีองค์ประกอบจากบุคคลอื่น</option>
+  </select>
+
+  <label for="art-license">สิทธิการใช้งานของผู้ซื้อ</label>
+  <select id="art-license">
+    <option value="commercial">อนุญาตให้ใช้เชิงพาณิชย์</option>
+    <option value="personal">ไม่อนุญาตให้ใช้เชิงพาณิชย์ (ส่วนบุคคลที่ไม่แสวงหารายได้)</option>
+  </select>
+  <label for="art-license-note">รายละเอียดการใช้งานเพิ่มเติม (ไม่บังคับ เช่น การให้เครดิต ข้อห้าม)</label>
+  <textarea id="art-license-note" rows="2" maxlength="300"></textarea>
+
+  <label for="art-days" id="art-days-label">ระยะเวลาประมูล</label>
+  <select id="art-days">
+    <option value="1">1 วัน</option>
+    <option value="3">3 วัน</option>
+    <option value="5">5 วัน</option>
+    <option value="7">7 วัน</option>
+  </select>
+
+  <button class="auction-button" id="sell-btn" onclick="createAuction()">🔥 เปิดประมูล</button>
+  <p class="msg" id="upload-message"></p>
+</section>
+
+<!-- หน้าประมูล -->
+<section class="page auction" id="page-auction">
+  <h2 id="auction-title">🔥 Fantasy Girl</h2>
+  <button class="ghost" id="fav-btn" onclick="toggleFav(current.id)">♡ เพิ่มในรายการโปรด</button>
+  <div class="auction-picture" id="auction-pic">🎨</div>
+  <p id="price-label">ราคาปัจจุบัน</p>
+  <h1 id="price">฿300</h1>
+  <div id="timer-box"><p>⏰ เหลือเวลา</p>
+  <h2 id="timer">--:--:--</h2></div>
+  <button id="bid-btn" onclick="bid()">💰 ประมูล +฿50</button>
+  <button id="buy-now" onclick="buyNow()" hidden>🛒 ซื้อเลย</button>
+  <p class="msg" id="message"></p>
+  <div id="order-box"></div>
+  <div class="reviews">
+    <h3>รีวิว <span id="rating-summary" class="muted"></span></h3>
+    <div id="review-list"></div>
+  </div>
+</section>
+
+<!-- เข้าสู่ระบบ -->
+<section class="page login-page" id="page-login">
+  <div class="form-box">
+    <h2>♡ ARTBID</h2>
+    <p>เข้าสู่ระบบเพื่อเริ่มซื้อขายผลงาน</p>
+    <label for="email">อีเมล</label>
+    <input id="email" type="email" placeholder="example@email.com" autocomplete="email">
+    <label for="password">รหัสผ่าน</label>
+    <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+    <button type="button" onclick="login()">เข้าสู่ระบบ</button>
+    <p class="msg" id="login-message"></p>
+    <hr>
+    <p class="muted">ยังไม่มีบัญชี?</p>
+    <button type="button" class="ghost" onclick="showPage('register')">สมัครสมาชิก</button>
+  </div>
+</section>
+
+<!-- สมัครสมาชิก -->
+<section class="page register-page" id="page-register">
+  <div class="form-box">
+    <h2>🎨 สร้างบัญชี ARTBID</h2>
+    <p>เข้าร่วมชุมชนนักวาดและคนรักศิลปะ</p>
+    <label for="register-name">ชื่อที่แสดง</label>
+    <input id="register-name" type="text" placeholder="ชื่อของคุณ">
+    <label for="register-email">อีเมล</label>
+    <input id="register-email" type="email" placeholder="example@email.com" autocomplete="email">
+    <label for="register-password">รหัสผ่าน</label>
+    <input id="register-password" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="new-password">
+    <button type="button" onclick="register()">สมัครสมาชิก</button>
+    <p class="msg" id="register-message"></p>
+    <button type="button" class="ghost" onclick="showPage('login')">มีบัญชีแล้ว? เข้าสู่ระบบ</button>
+  </div>
+</section>
+</main>
+
+<div id="buy-modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="buy-title">
+  <div class="modal-box"><button type="button" class="modal-x" onclick="closeBuy()" aria-label="ปิด">✕</button><div id="buy-body"></div></div>
+</div>
+
+<div id="tip-modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="tip-title">
+  <div class="modal-box"><button type="button" class="modal-x" onclick="closeTip()" aria-label="ปิด">✕</button><div id="tip-body"></div></div>
+</div>
+
+<div id="terms-modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="terms-title">
+  <div class="modal-box">
+    <button type="button" class="modal-x" onclick="closeTerms()" aria-label="ปิด">✕</button>
+    <div>
+      <h3 id="terms-title">ข้อตกลงการลงทะเบียนศิลปิน ARTBID</h3>
+      <p class="muted" style="font-size:.85rem">ฉบับร่าง เวอร์ชัน 1.0 · รอตรวจโดยผู้เชี่ยวชาญด้านกฎหมายก่อนเปิดใช้งานจริง · กรุณาอ่านให้จบก่อนลงทะเบียน</p>
+      <div class="terms" id="terms-scroll" tabindex="0" onscroll="checkTermsScroll()">
+<p>ข้อตกลงนี้กำหนดสิทธิ หน้าที่ และเงื่อนไขสำหรับศิลปินที่ลงทะเบียนเพื่อขายผลงานและรับการสนับสนุนบน ARTBID การลงทะเบียนเป็นศิลปินและการนำผลงานมาลงขาย ถือว่าศิลปินยืนยันว่าได้อ่านและเข้าใจเงื่อนไขแล้ว</p>
+<h4>ข้อ 1 คุณสมบัติและความรับผิดชอบของศิลปิน</h4>
+<p>1.1 ให้ข้อมูลลงทะเบียนที่ถูกต้องและเป็นปัจจุบัน</p>
+<p>1.2 ต้องเป็นเจ้าของผลงาน หรือได้รับอนุญาตอย่างถูกต้องจากเจ้าของสิทธิให้เผยแพร่และจำหน่ายผลงานนั้น</p>
+<p>1.3 ห้ามนำผลงานของบุคคลอื่นมาจำหน่ายหรือประมูลโดยไม่ได้รับอนุญาต และห้ามแอบอ้างว่าเป็นผู้สร้างผลงาน</p>
+<p>1.4 ต้องระบุรายละเอียด ราคา เงื่อนไขการขาย และสิทธิในการนำผลงานไปใช้ให้ชัดเจนก่อนเปิดขายหรือเปิดประมูล</p>
+<p>1.5 ต้องไม่ใช้แพลตฟอร์มเพื่อหลอกลวง ละเมิดสิทธิของผู้อื่น หรือกระทำการที่ผิดกฎหมาย</p>
+<p>1.6 ต้องแจ้งผู้ซื้อว่าผลงานเป็นงานต้นฉบับ งานพิมพ์ งานดิจิทัล งานที่สร้างด้วย AI หรืองานที่มีองค์ประกอบจากบุคคลอื่น ตามความเหมาะสม และต้องไม่บิดเบือนรายละเอียด คุณภาพ หรือสิทธิในการใช้งาน</p>
+<p>1.7 หากเกิดข้อพิพาท ARTBID อาจขอข้อมูลหรือหลักฐานที่จำเป็น และดำเนินการตามนโยบายข้อพิพาทของแพลตฟอร์ม</p>
+<h4>ข้อ 2 ค่าธรรมเนียมและการจ่ายเงิน</h4>
+<p>2.1 การขายผลงานทั่วไป: ARTBID หักค่าธรรมเนียมแพลตฟอร์ม 10% ของราคาขายที่สำเร็จ</p>
+<p>2.2 การประมูล: ARTBID หักค่าธรรมเนียมแพลตฟอร์ม 10% ของราคาประมูลสุดท้ายที่ผู้ซื้อชำระสำเร็จ</p>
+<p>2.3 ศิลปินได้รับส่วนแบ่ง 90% ค่าธรรมเนียมหักจากส่วนของศิลปิน ไม่เรียกเก็บเพิ่มจากผู้ซื้อ</p>
+<p>2.4 ตัวอย่าง: ขาย 1,000 บาท ศิลปินได้ 900 บาท ARTBID ได้ 100 บาท · ประมูลสุดท้าย 5,000 บาท ศิลปินได้ 4,500 บาท ARTBID ได้ 500 บาท</p>
+<p>2.5 Tip และ Donate: ARTBID หักค่าธรรมเนียมแพลตฟอร์ม 0% ตามข้อ 6</p>
+<p>2.6 ค่าธรรมเนียมจากผู้ให้บริการชำระเงิน ภาษี ค่าจัดส่ง หรือค่าใช้จ่ายอื่น (ถ้ามี) ต้องแจ้งผู้เกี่ยวข้องให้ทราบชัดเจนก่อนทำรายการ และจะไม่ถูกหักเพิ่มจากศิลปินโดยไม่แจ้งเงื่อนไขไว้ล่วงหน้า</p>
+<p>2.7 รอบจ่ายเงิน: ARTBID จ่ายเงินให้ศิลปินในช่วงวันที่ 1–5 ของทุกเดือน สำหรับยอดที่ถึงกำหนดจ่ายแล้ว โดยยอดจะถึงกำหนดเมื่อ (ก) ได้รับการยืนยันการชำระเงินจากผู้ให้บริการชำระเงินจริง (ข) พ้นช่วงพักเงิน [__ วัน] ซึ่งเป็นช่วงเดียวกับที่ผู้ซื้อยกเลิกได้ตามข้อ 5 (ค) ไม่มีข้อพิพาทค้างอยู่ และ (ง) ศิลปินให้ข้อมูลรับเงินที่ถูกต้อง หากวันจ่ายตรงกับวันหยุดหรือเกิดเหตุขัดข้อง ARTBID จะแจ้งกำหนดการใหม่</p>
+<p>2.8 ความโปร่งใส: ARTBID บันทึกยอดที่เป็นสิทธิของศิลปินแยกจากรายได้แพลตฟอร์ม และแสดงในแดชบอร์ดเป็น เงินเข้า เงินรอจ่าย และเงินที่จ่ายแล้ว พร้อมยอดขาย ค่าธรรมเนียม และประวัติการจ่ายเงิน</p>
+<p>2.9 รายการธุรกรรมถูกบันทึกแบบตรวจสอบย้อนหลังได้ มีระบบป้องกันการบันทึกซ้ำ และไม่อนุญาตให้แก้ไขยอดเงินโดยไม่ได้รับอนุญาต</p>
+<h4>ข้อ 3 เงื่อนไขการประมูล</h4>
+<p>3.1 ศิลปินต้องกำหนดราคาเริ่มต้น ระยะเวลาประมูล และเงื่อนไขที่เกี่ยวข้องก่อนเปิดประมูล</p>
+<p>3.2 เมื่อการประมูลสิ้นสุด ผู้ชนะต้องชำระเงินตามเงื่อนไขที่ประกาศไว้</p>
+<p>3.3 การเสนอราคา การยกเลิก การชำระเงิน และการคืนเงิน เป็นไปตามกติกาการประมูลและข้อ 5</p>
+<p>3.4 ห้ามศิลปินเสนอราคาผลงานของตนเอง หรือใช้บัญชีอื่นเพื่อปั่นราคาและทำให้การประมูลไม่เป็นธรรม</p>
+<h4>ข้อ 4 ลิขสิทธิ์และสิทธิในการใช้ผลงาน</h4>
+<p>4.1 ลิขสิทธิ์ในผลงานยังคงเป็นของศิลปิน เว้นแต่จะมีข้อตกลงเป็นลายลักษณ์อักษรเป็นอย่างอื่น</p>
+<p>4.2 ศิลปินต้องเลือกเงื่อนไขการใช้งานของผลงานแต่ละชิ้น 1 ใน 2 รูปแบบ ได้แก่ <b>อนุญาตให้ใช้เชิงพาณิชย์</b> (ผู้ซื้อใช้เพื่อธุรกิจหรือสร้างรายได้ได้ ภายใต้ขอบเขตที่ศิลปินกำหนด) หรือ <b>ไม่อนุญาตให้ใช้เชิงพาณิชย์</b> (ใช้ได้เฉพาะส่วนบุคคลที่ไม่แสวงหารายได้ ตามเงื่อนไขที่ศิลปินกำหนด)</p>
+<p>4.3 ศิลปินเขียนรายละเอียดเพิ่มเติมได้ เช่น การให้เครดิต การแก้ไขดัดแปลง การใช้ในวิดีโอ การพิมพ์สินค้า การใช้กับแบรนด์ และข้อห้ามต่าง ๆ</p>
+<p>4.4 การซื้อผลงานไม่ทำให้ผู้ซื้อได้ลิขสิทธิ์โดยอัตโนมัติ การโอนลิขสิทธิ์ต้องมีข้อตกลงแยกต่างหากที่ชัดเจน</p>
+<p>4.5 ARTBID ใช้ภาพตัวอย่าง ชื่อผลงาน และชื่อศิลปินเท่าที่จำเป็นเพื่อแสดงรายการ ประชาสัมพันธ์ และดำเนินงานของแพลตฟอร์ม ภายใต้ขอบเขตที่แจ้งให้ศิลปินทราบ</p>
+<h4>ข้อ 5 การยกเลิกและคืนเงิน</h4>
+<p>5.1 เงื่อนไขทั้งหมดต้องไม่ขัดต่อกฎหมายและสิทธิผู้บริโภค ไม่ตัดสิทธิที่กฎหมายกำหนดให้ผู้ซื้อ และผู้ซื้อต้องเห็นเงื่อนไขที่ตรงกับประเภทการขายก่อนชำระเงิน</p>
+<p>5.2 อัตราการคืนเงินให้ผู้ซื้อ:</p>
+<table><tr><th>กรณี</th><th>ซื้อทั่วไป</th><th>ประมูล</th></tr>
+<tr><td>ผู้ซื้อยกเลิกเองตามเงื่อนไข (ประมูลต้องได้รับอนุมัติ)</td><td>คืน 100%</td><td>คืน 100%</td></tr>
+<tr><td>ข้อผิดพลาดจากศิลปิน</td><td>คืน 100%</td><td>คืน 100%</td></tr>
+<tr><td>ข้อผิดพลาดจากเว็บไซต์</td><td>คืน 100%</td><td>คืน 100%</td></tr>
+<tr><td>ตรวจสอบแล้วพบเจตนาก่อกวนระบบ</td><td>คืน 60%</td><td>คืน 60%</td></tr></table>
+<p>5.3 อัตรา 60% ใช้เฉพาะกรณีที่ตรวจสอบแล้วพบเจตนาก่อกวนและเข้าเงื่อนไขที่แจ้งผู้ซื้อไว้ล่วงหน้า โดยต้องแจ้งเหตุผลและหลักฐาน และเปิดโอกาสให้ชี้แจงหรืออุทธรณ์ก่อนใช้ ส่วนที่ไม่คืน (40%) เป็นรายได้ของ ARTBID</p>
+<p>5.4 ผลต่อศิลปิน: รายการที่มีการคืนเงินจะไม่ถูกนับเป็นยอดขายที่สำเร็จ ศิลปินไม่ได้รับส่วนแบ่งจากรายการนั้น และ ARTBID ไม่เรียกเก็บค่าธรรมเนียม 10% จากรายการที่คืนเต็มจำนวน ศิลปินไม่ถูกหักเงินจากส่วนที่ไม่คืนตามข้อ 5.3</p>
+<p>5.5 ก่อนจ่ายเงินให้ศิลปิน ARTBID ระงับยอดของรายการที่มีข้อพิพาทหรือคำขอยกเลิกไว้จนกว่าจะข้อยุติ</p>
+<p>5.6 หลังจ่ายเงินแล้ว หากต้องคืนเงินเพราะข้อผิดพลาดจากศิลปิน ศิลปินยินยอมให้ ARTBID หักจากยอดจ่ายรอบถัดไปหรือคืนเงินส่วนที่ได้รับไป หากเป็นข้อผิดพลาดจากเว็บไซต์ ARTBID รับผิดชอบเอง ไม่เรียกคืนจากศิลปิน</p>
+<h4>ข้อ 6 ระบบทิปและโดเนท (Tip &amp; Donate)</h4>
+<p>6.1 ผู้ใช้งานสนับสนุนศิลปินได้โดยสมัครใจ โดยไม่จำเป็นต้องซื้อผลงาน</p>
+<p>6.2 <b>Tip</b> คือเงินให้เป็นกำลังใจศิลปินหรือผลงาน ส่วน <b>Donate</b> คือเงินสนับสนุนการทำงานของศิลปินโดยทั่วไป ทั้งสองแบบมีเงื่อนไขเดียวกัน และระบบบันทึกประเภทแยกกัน</p>
+<p>6.3 ARTBID ไม่หักค่าธรรมเนียมแพลตฟอร์มจากยอด Tip และ Donate (0%)</p>
+<p>6.4 เงินสนับสนุนที่ชำระสำเร็จและได้รับการยืนยันจากผู้ให้บริการชำระเงินจริงแล้ว จะถูกบันทึกแยกจากยอดขายและยอดประมูล และจ่ายให้ศิลปินตามรอบข้อ 2.7</p>
+<p>6.5 การสนับสนุนไม่ถือเป็นการซื้อผลงาน ไม่มีการส่งมอบผลงาน และไม่เป็นการโอนลิขสิทธิ์หรือสิทธิใด ๆ</p>
+<p>6.6 ค่าธรรมเนียมจากผู้ให้บริการชำระเงิน (ถ้ามี) แสดงแยกก่อนผู้ส่งยืนยัน โดยผู้ส่งเป็นผู้รับผิดชอบ เพื่อให้ศิลปินได้รับเต็มจำนวนที่ผู้ส่งระบุ</p>
+<p>6.7 ยอด Tip และ Donate ที่สำเร็จแล้วไม่คืนเงิน เว้นแต่เรียกเก็บซ้ำ ไม่ได้รับอนุญาตจากเจ้าของบัญชีชำระเงิน ระบบหรือผู้ให้บริการผิดพลาด หรือกฎหมายกำหนด การตรวจสอบธุรกรรมและการจัดการกรณีทุจริตเป็นไปตามนโยบายที่ประกาศไว้และกฎหมายที่เกี่ยวข้อง</p>
+<p>6.8 ระบบนี้เปิดใช้เมื่อเชื่อมต่อผู้ให้บริการชำระเงินที่พร้อมใช้งานแล้วเท่านั้น และจะไม่แสดงสถานะสำเร็จจนกว่าจะได้รับการยืนยันจากผู้ให้บริการ</p>
+<h4>ข้อ 7 การระงับบัญชีและการยอมรับข้อตกลง</h4>
+<p>7.1 ARTBID อาจจำกัดการใช้งานหรือระงับบัญชีตามกระบวนการที่เป็นธรรม หากพบการทุจริต การละเมิดลิขสิทธิ์ การปั่นราคา หรือการฝ่าฝืนข้อตกลงอย่างมีนัยสำคัญ โดยแจ้งเหตุผลและช่องทางอุทธรณ์</p>
+<p>7.2 เมื่อศิลปินทำเครื่องหมายยอมรับและลงทะเบียน ถือว่าได้อ่านและเข้าใจเงื่อนไขการลงทะเบียน ค่าธรรมเนียม การคืนเงิน ระบบ Tip &amp; Donate และนโยบายการใช้ผลงานของ ARTBID แล้ว</p>
+<p>7.3 ARTBID จะแจ้งการเปลี่ยนแปลงเงื่อนไขที่มีสาระสำคัญให้ศิลปินทราบก่อนมีผลบังคับใช้</p>
+      </div>
+      <p class="muted" id="terms-hint" style="font-size:.85rem">เลื่อนอ่านข้อตกลงให้สุดก่อนจึงจะติ๊กยอมรับได้</p>
+      <label><input type="checkbox" id="terms-ok" disabled style="width:auto;margin:0 .4rem 0 0" onchange="$('terms-go').disabled = !this.checked"> ข้าพเจ้าได้อ่านและยอมรับข้อตกลงการลงทะเบียนศิลปิน ARTBID</label>
+      <button type="button" class="full" id="terms-go" disabled onclick="confirmTerms()">ยอมรับและลงทะเบียนเป็นศิลปิน</button>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav" aria-label="เมนูหลัก">
+  <a href="#home" data-link="home"><i>🏠</i><span>หน้าแรก</span></a>
+  <a href="#gallery" data-link="gallery"><i>🔨</i><span>ประมูล</span></a>
+  <a href="#upload" data-link="upload" class="center"><i>＋</i><span>ลงผลงาน</span></a>
+  <a href="#favorites" data-link="favorites"><i>♥</i><span>โปรด</span></a>
+  <a href="#artists" data-link="artists"><i>🎨</i><span>นักวาด</span></a>
+</nav>
+
+<script>
+/* ===== ตั้งค่า Supabase (ใช้ anon key เท่านั้น ห้ามใส่ service_role key) ===== */
+const SUPABASE_URL = 'https://kzoinbgxwicbjdvbjwda.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_RbZWvrLXI2rkUKbY-cBl5w_5DoMyfzH';
+const USE_LOCAL = true; // true = เก็บข้อมูลในเบราว์เซอร์ (ไม่ใช้ Supabase) | false = ใช้ Supabase
+const sb = (!USE_LOCAL && !SUPABASE_URL.startsWith('YOUR_') && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+const LS = {
+  get(k, d){ try { const v = JSON.parse(localStorage.getItem('artbid_' + k)); return v ?? d; } catch { return d; } },
+  set(k, v){ try { localStorage.setItem('artbid_' + k, JSON.stringify(v)); return true; } catch { return false; } }
+};
+const toUser = u => ({id: u.email, email: u.email, user_metadata: {display_name: u.name}});
+function compress(file, max = 700){
+  return new Promise((res, rej) => {
+    const img = new Image(), fr = new FileReader();
+    fr.onerror = rej;
+    fr.onload = () => { img.src = fr.result; };
+    img.onload = () => {
+      const r = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+
+/* ===== ข้อมูลตัวอย่าง (ใช้เมื่อยังไม่ได้ตั้งค่า Supabase) ===== */
+const hours = h => new Date(Date.now() + h * 3600e3).toISOString();
+let auctions = [
+  {id:'1', title:'Fantasy Girl', artist:'Artist A', price:300, ends_at:hours(2.5), emoji:'🎨'},
+  {id:'2', title:'Cherry Blossom', artist:'Artist B', price:750, ends_at:hours(5.7), emoji:'🌸'},
+  {id:'3', title:'My OC', artist:'Artist C', price:500, ends_at:hours(1.3), emoji:'🐰'},
+  {id:'4', title:'Shadow Dancer', artist:'Ayane Art', price:18500, ends_at:hours(8), emoji:'💃'},
+  {id:'5', title:'Spring Letter', artist:'Artist D', price:9900, ends_at:hours(3.2), emoji:'🌷'}
+];
+let current = null, user = null, tick = null, pickedFile = null;
+if (USE_LOCAL){
+  const saved = LS.get('auctions', null);
+  if (saved) auctions = saved; else LS.set('auctions', auctions);
+}
+const BID_STEP = 50;
+
+const $ = id => document.getElementById(id);
+const baht = n => '฿' + Number(n).toLocaleString('th-TH');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function say(id, text, ok){ const el = $(id); el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); }
+function fmt(ms){
+  if (ms <= 0) return 'จบการประมูลแล้ว';
+  const s = Math.floor(ms / 1000), p = n => String(n).padStart(2, '0');
+  return `${p(Math.floor(s / 3600))}:${p(Math.floor(s % 3600 / 60))}:${p(s % 60)}`;
+}
+
+/* ===== สลับหน้า ===== */
+function showPage(name){
+  if (name === 'upload' && !user){ showPage('login'); say('login-message', 'กรุณาเข้าสู่ระบบก่อนลงผลงาน', false); return; }
+  if (name === 'upload' && !isArtist()){ showPage('me'); say('me-message', 'ลงทะเบียนเป็นศิลปินก่อนจึงจะลงผลงานได้', false); return; }
+  if (name === 'me' && !user){ showPage('login'); return; }
+  if (name === 'mytips' && !user){ showPage('login'); return; }
+  if (name === 'dash' && !isArtist()){ showPage('me'); return; }
+  document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
+  document.querySelectorAll('[data-link]').forEach(a => a.classList.toggle('on', a.dataset.link === name));
+  if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+  if (name === 'gallery') loadAuctions();
+  if (name === 'favorites') renderFavs();
+  if (name === 'home') renderHome();
+  if (name === 'artist') renderArtist();
+  if (name === 'artists') renderArtists();
+  if (name === 'me') renderMe();
+  if (name === 'dash') renderDash();
+  if (name === 'mytips') renderMyTips();
+  if (name !== 'auction' && tick){ clearInterval(tick); tick = null; }
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('[data-link]').forEach(a => a.addEventListener('click', e => {
+  e.preventDefault(); showPage(a.getAttribute('href').slice(1));
+}));
+
+/* ===== รายการประมูล ===== */
+async function loadAuctions(){
+  if (sb){
+    const {data, error} = await sb.from('auctions').select('*').gt('ends_at', new Date().toISOString()).order('ends_at');
+    if (!error && data) auctions = data;
+  } else if (USE_LOCAL){
+    auctions = LS.get('auctions', auctions);
+  }
+  renderGrid();
+}
+const GR = ['#ffd6e5,#d7ccff','#ffe8c7,#f7b5a0','#d4e6f1,#c9b8f0','#fbd5d5,#f0a6ca','#e8dcf7,#b9a4e6'];
+const isRegular = a => a.sale_type === 'regular';
+const isLive = a => isRegular(a) ? !a.sold : new Date(a.ends_at) > Date.now();
+const thumb = a => a.image_url
+  ? `<img class="art-photo" src="${esc(a.image_url)}" alt="${esc(a.title)}">`
+  : `<div class="art-image" style="background:linear-gradient(135deg,${GR[[...String(a.id)].reduce((t, c) => t + c.charCodeAt(0), 0) % GR.length]})">${esc(a.emoji || '🖼️')}</div>`;
+function cardHTML(a){
+  const id = esc(a.id), on = isFav(a.id), live = isLive(a);
+  return `
+    <div class="art-card">
+      ${a.emoji && !a.image_url ? '<span class="badge">ข้อมูลจำลอง</span>' : ''}
+      <button class="heart ${on ? 'on' : ''}" data-id="${id}" aria-label="รายการโปรด" onclick="toggleFav('${id}')">${on ? '♥' : '♡'}</button>
+      ${thumb(a)}
+      <h3>${esc(a.title)}</h3>
+      <p class="muted">โดย ${byLink(a.artist)}</p>
+      <strong>${baht(a.price)}</strong>
+      <p class="muted">${isRegular(a) ? (live ? '🟢 พร้อมขาย' : '⚫ ขายแล้ว') : (live ? '🟢 กำลังประมูล' : '⚫ จบแล้ว') + ' <span class="cd" data-end="' + esc(a.ends_at) + '">' + fmt(new Date(a.ends_at) - Date.now()) + '</span>'}</p>
+      <button onclick="openAuction('${id}')">${live ? (isRegular(a) ? 'ซื้อเลย' : 'ประมูล') : 'ดูผลงาน'}</button>
+    </div>`;
+}
+const matchQ = a => { const q = ($('q').value || '').trim().toLowerCase(); return !q || (a.title + ' ' + a.artist).toLowerCase().includes(q); };
+function renderGrid(){
+  const q = ($('q').value || '').trim().toLowerCase();
+  const as = q ? artistsList().filter(a => matchArtist(a, q)) : [];
+  $('search-artists').innerHTML = as.length ? '<h3>ศิลปิน</h3><div class="artists-grid">' + as.map(chipHTML).join('') + '</div><h3 style="margin-top:1rem">ผลงาน</h3>' : '';
+  const list = auctions.filter(matchQ);
+  $('art-grid').innerHTML = list.map(cardHTML).join('') || (as.length ? '' : '<p class="muted">ไม่พบผลงานหรือศิลปิน</p>');
+}
+const newId = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+  : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+const artistsList = () => LS.get('artists', []);
+const matchArtist = (a, q) => { const id = (a.id || '').toLowerCase(); return id === q || (q.length >= 8 && id.includes(q)) || a.name.toLowerCase().includes(q); };
+const idLine = id => `<span class="idbox">รหัสศิลปิน: <code>${esc(id)}</code> <button type="button" class="chip" onclick="copyId('${esc(id)}', this)">คัดลอก</button></span>`;
+async function copyId(id, btn){
+  try { await navigator.clipboard.writeText(id); }
+  catch { const t = document.createElement('textarea'); t.value = id; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch {} t.remove(); }
+  if (btn){ const o = btn.textContent; btn.textContent = 'คัดลอกแล้ว ✓'; setTimeout(() => { btn.textContent = o; }, 1500); }
+}
+const isArtist = () => !!user && artistsList().some(a => a.user === uid());
+function statsLine(n){
+  const w = auctions.filter(a => a.artist === n).length, f = new Set(followsOf(n).map(x => x.user)).size;
+  const rv = LS.get('reviews', []).filter(r => r.artist === n);
+  return `${w} ผลงาน · ${f} ผู้ติดตาม` + (rv.length ? ` · ${(rv.reduce((t, r) => t + r.rating, 0) / rv.length).toFixed(1)} ⭐` : '');
+}
+const chipHTML = a => `<button class="artist-chip" data-artist="${esc(a.name)}" onclick="showArtist(this.dataset.artist)"><i>🎨</i><span><strong style="font-size:1rem;color:inherit">${esc(a.name)}</strong><br><span class="muted">${esc(a.bio || '')}</span><br><span class="muted" style="font-size:.8rem">${statsLine(a.name)}</span></span></button>`;
+async function renderHome(){
+  await loadAuctions();
+  const live = auctions.filter(isLive);
+  const list = (live.length ? live : auctions).slice().sort((x, y) => y.price - x.price), f = list[0];
+  $('feature').innerHTML = f ? `
+    ${a_badge(f)}${thumb(f)}
+    <div class="feature-info">
+      <div><h3>${esc(f.title)}</h3><p class="muted">โดย ${byLink(f.artist)}</p>
+        <strong>${baht(f.price)}</strong> ${isRegular(f) ? '<span class="muted">ราคาขาย</span>' : '<span class="cd muted" data-end="' + esc(f.ends_at) + '">' + fmt(new Date(f.ends_at) - Date.now()) + '</span>'}</div>
+      <button onclick="openAuction('${esc(f.id)}')">${isRegular(f) ? 'ดูและซื้อ' : 'เข้าร่วมประมูล'}</button>
+    </div>` : '<p class="muted">ยังไม่มีผลงานเด่น</p>';
+  $('popular').innerHTML = list.slice(1, 7).map(cardHTML).join('') || '<p class="muted">ยังไม่มีผลงาน</p>';
+  $('artists-rec').innerHTML = artistsList().slice().sort((x, y) => followsOf(y.name).length - followsOf(x.name).length).slice(0, 8).map(chipHTML).join('') || '<p class="muted">ยังไม่มีศิลปินที่ลงทะเบียน</p>';
+}
+const a_badge = a => a.emoji && !a.image_url ? '<span class="tag">ข้อมูลจำลอง</span>' : '';
+
+/* ===== รายการโปรด (เก็บในเบราว์เซอร์ แยกตามบัญชี) ===== */
+const favKey = () => 'favs_' + (user ? user.email : 'guest');
+const getFavs = () => LS.get(favKey(), []);
+const isFav = id => getFavs().includes(String(id));
+function updateFavBtn(){
+  if (!current) return;
+  const on = isFav(current.id), b = $('fav-btn');
+  b.textContent = on ? '♥ อยู่ในรายการโปรด' : '♡ เพิ่มในรายการโปรด';
+  b.classList.toggle('on', on);
+}
+function toggleFav(id){
+  id = String(id);
+  const f = getFavs(), on = !f.includes(id);
+  LS.set(favKey(), on ? [...f, id] : f.filter(x => x !== id));
+  document.querySelectorAll('.heart').forEach(b => {
+    if (b.dataset.id === id){ b.classList.toggle('on', on); b.textContent = on ? '♥' : '♡'; }
+  });
+  updateFavBtn();
+  if ($('page-favorites').classList.contains('active')) renderFavs();
+}
+async function renderFavs(){
+  await loadAuctions();
+  const f = getFavs(), list = auctions.filter(a => f.includes(String(a.id)));
+  $('fav-grid').innerHTML = list.map(cardHTML).join('') || '<p class="muted">ยังไม่มีรายการโปรด กด ♡ ที่ผลงานเพื่อเก็บไว้ดูภายหลัง</p>';
+}
+function openAuction(id){
+  current = auctions.find(a => String(a.id) === String(id));
+  if (!current) return;
+  $('auction-title').textContent = '🔥 ' + current.title;
+  $('auction-pic').innerHTML = current.image_url ? `<img src="${esc(current.image_url)}" alt="${esc(current.title)}">` : esc(current.emoji || '🎨');
+  $('message').textContent = '';
+  updateFavBtn();
+  lastEnded = null;
+  renderReviews();
+  updateAuction();
+  showPage('auction');
+  clearInterval(tick);
+  tick = setInterval(updateAuction, 1000);
+}
+function updateAuction(){
+  const reg = isRegular(current);
+  $('price').textContent = baht(current.price);
+  $('price-label').textContent = reg ? 'ราคาขาย' : 'ราคาปัจจุบัน';
+  $('timer-box').hidden = reg; $('bid-btn').hidden = reg;
+  $('buy-now').hidden = !reg || !!current.sold;
+  let left = 1;
+  if (reg){ left = current.sold ? 0 : 1; }
+  else {
+    left = new Date(current.ends_at) - Date.now();
+    $('timer').textContent = fmt(left);
+    $('bid-btn').disabled = left <= 0;
+    $('bid-btn').textContent = `💰 ประมูล +${baht(BID_STEP)}`;
+  }
+  if ((left <= 0) !== lastEnded){ lastEnded = left <= 0; renderOrder(); }
+}
+function buyNow(){
+  if (!user){ showPage('login'); say('login-message', 'กรุณาเข้าสู่ระบบก่อนซื้อผลงาน', false); return; }
+  if (myName() === current.artist) return say('message', 'ไม่สามารถซื้อผลงานของตัวเองได้', false);
+  if (current.sold) return say('message', 'ผลงานนี้ขายแล้ว', false);
+  openBuy();
+}
+
+/* ===== ประมูล ===== */
+async function bid(){
+  if (!user){ showPage('login'); say('login-message', 'กรุณาเข้าสู่ระบบก่อนประมูล', false); return; }
+  if ((user.user_metadata?.display_name || user.email) === current.artist) return say('message', 'ไม่สามารถประมูลผลงานของตัวเองได้', false);
+  const next = Number(current.price) + BID_STEP;
+  if (isRegular(current)) return;
+  if (new Date(current.ends_at) <= Date.now()) return say('message', 'การประมูลจบแล้ว', false);
+  if (sb){
+    // ฝั่งเซิร์ฟเวอร์ตรวจราคา/เวลา/สิทธิ์ (ดู SQL ด้านล่าง)
+    const {data, error} = await sb.rpc('place_bid', {p_auction_id: current.id, p_amount: next});
+    if (error){ say('message', 'ประมูลไม่สำเร็จ: ' + error.message, false); return; }
+    current.price = data ?? next;
+  } else {
+    current.price = next;
+    current.last_bidder = user.email;
+    if (USE_LOCAL) LS.set('auctions', auctions);
+  }
+  updateAuction();
+  say('message', 'ประมูลสำเร็จ! ราคาปัจจุบัน ' + baht(current.price), true);
+  renderOrder();
+}
+
+/* ===== สมัคร / เข้าสู่ระบบ ===== */
+async function register(){
+  const name = $('register-name').value.trim(), email = $('register-email').value.trim(), pw = $('register-password').value;
+  if (!name || !email) return say('register-message', 'กรุณากรอกชื่อและอีเมล', false);
+  if (pw.length < 6) return say('register-message', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร', false);
+  if (!sb){
+    const users = LS.get('users', []);
+    if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) return say('register-message', 'อีเมลนี้สมัครไปแล้ว', false);
+    const u = {email, password: pw, name};
+    users.push(u); LS.set('users', users); LS.set('session', email);
+    setUser(toUser(u));
+    say('register-message', 'สมัครสำเร็จ!', true);
+    return setTimeout(() => showPage('home'), 600);
+  }
+  const {error} = await sb.auth.signUp({email, password: pw, options: {data: {display_name: name}}});
+  if (error) return say('register-message', error.message, false);
+  say('register-message', 'สมัครสำเร็จ! ตรวจอีเมลเพื่อยืนยันบัญชี (ถ้าเปิดใช้งานไว้)', true);
+}
+async function login(){
+  const email = $('email').value.trim(), pw = $('password').value;
+  if (!email || !pw) return say('login-message', 'กรุณากรอกอีเมลและรหัสผ่าน', false);
+  if (!sb){
+    const u = LS.get('users', []).find(x => x.email.toLowerCase() === email.toLowerCase() && x.password === pw);
+    if (!u) return say('login-message', 'อีเมลหรือรหัสผ่านไม่ถูกต้อง', false);
+    LS.set('session', u.email); setUser(toUser(u));
+    return showPage('home');
+  }
+  const {error} = await sb.auth.signInWithPassword({email, password: pw});
+  if (error) return say('login-message', 'อีเมลหรือรหัสผ่านไม่ถูกต้อง', false);
+  showPage('home');
+}
+function authButton(){ showPage(user ? 'me' : 'login'); }
+async function logout(){
+  if (sb) await sb.auth.signOut(); else { LS.set('session', null); setUser(null); }
+  showPage('home');
+}
+function setUser(u){
+  user = u;
+  $('auth-btn').textContent = u ? '👤 ' + (u.user_metadata?.display_name || u.email) : 'เข้าสู่ระบบ';
+}
+if (sb){
+  sb.auth.getSession().then(({data}) => setUser(data.session?.user ?? null));
+  sb.auth.onAuthStateChange((_e, session) => setUser(session?.user ?? null));
+} else {
+  const em = LS.get('session', null), u = LS.get('users', []).find(x => x.email === em);
+  if (u) setUser(toUser(u));
+}
+
+
+/* ===== ลงผลงาน ===== */
+function handleFile(file){
+  pickedFile = null; $('preview').innerHTML = '';
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return say('upload-message', 'กรุณาเลือกไฟล์รูปภาพ', false);
+  $('upload-message').textContent = '';
+  pickedFile = file;
+  const fr = new FileReader();
+  fr.onload = () => {
+    $('preview').innerHTML = `<p class="muted">${esc(file.name)}</p><img src="${fr.result}" alt="ตัวอย่างภาพ" onerror="this.outerHTML='<p class=&quot;msg err&quot;>เบราว์เซอร์แสดงภาพนี้ไม่ได้ (เช่น ไฟล์ HEIC) ลองใช้ JPG หรือ PNG</p>'">`;
+  };
+  fr.readAsDataURL(file);
+}
+$('file-input').addEventListener('change', e => handleFile(e.target.files[0]));
+const dropBox = document.querySelector('.upload-box');
+['dragenter','dragover'].forEach(ev => dropBox.addEventListener(ev, e => { e.preventDefault(); dropBox.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev => dropBox.addEventListener(ev, e => { e.preventDefault(); dropBox.classList.remove('drag'); }));
+dropBox.addEventListener('drop', e => handleFile(e.dataTransfer.files[0]));
+function saleChange(){
+  const reg = $('art-sale').value === 'regular';
+  $('art-price-label').textContent = reg ? 'ราคาขาย (บาท)' : 'ราคาเริ่มต้น (บาท)';
+  $('art-days-label').hidden = reg; $('art-days').hidden = reg;
+  $('sell-btn').textContent = reg ? '🛒 วางขาย' : '🔥 เปิดประมูล';
+}
+async function createAuction(){
+  const title = $('art-title').value.trim(), price = Number($('art-price').value), days = Number($('art-days').value);
+  if (!isArtist()) return say('upload-message', 'ต้องลงทะเบียนเป็นศิลปินก่อน', false);
+  const sale = $('art-sale').value;
+  if (sb && sale === 'regular') return say('upload-message', 'ขายทั่วไปรองรับเฉพาะโหมดเบราว์เซอร์ในตอนนี้', false);
+  if (!pickedFile || !title || !(price > 0)) return say('upload-message', 'กรุณาเลือกภาพ ใส่ชื่อ และราคาเริ่มต้น', false);
+  if (!sb){
+    let img;
+    try { img = await compress(pickedFile); } catch { return say('upload-message', 'อ่านไฟล์ภาพไม่ได้', false); }
+    auctions = LS.get('auctions', auctions);
+    auctions.unshift({id: String(Date.now()), title, description: $('art-desc').value.trim(), price, image_url: img, sale_type: sale, work_type: $('art-type').value, license: $('art-license').value, license_note: $('art-license-note').value.trim(),
+      artist: user.user_metadata?.display_name || user.email, ends_at: sale === 'regular' ? null : new Date(Date.now() + days * 864e5).toISOString()});
+    if (!LS.set('auctions', auctions)){ auctions.shift(); return say('upload-message', 'พื้นที่เก็บข้อมูลเต็ม ลองใช้รูปที่เล็กลง', false); }
+    say('upload-message', sale === 'regular' ? 'วางขายเรียบร้อย!' : 'เปิดประมูลเรียบร้อย!', true);
+    return setTimeout(() => showPage('gallery'), 800);
+  }
+  const path = `${user.id}/${Date.now()}-${pickedFile.name.replace(/[^\w.-]/g, '_')}`;
+  const up = await sb.storage.from('artworks').upload(path, pickedFile);
+  if (up.error) return say('upload-message', up.error.message, false);
+  const {data: pub} = sb.storage.from('artworks').getPublicUrl(path);
+  const {error} = await sb.from('auctions').insert({
+    title, description: $('art-desc').value.trim(), price, image_url: pub.publicUrl,
+    artist: user.user_metadata?.display_name || user.email, artist_id: user.id,
+    ends_at: new Date(Date.now() + days * 864e5).toISOString()
+  });
+  if (error) return say('upload-message', error.message, false);
+  say('upload-message', 'เปิดประมูลเรียบร้อย!', true);
+  setTimeout(() => showPage('gallery'), 800);
+}
+
+/* ===== ชำระเงิน / รีวิว / นักวาด / ผู้ติดตาม (เก็บในเบราว์เซอร์) ===== */
+let lastEnded = null, reviewRating = 0, currentArtist = null;
+const uid = () => user ? (sb ? user.id : user.email) : null;
+const myName = () => user ? (user.user_metadata?.display_name || user.email) : null;
+const stars = n => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
+const byLink = n => `<a class="by" href="#artist" data-artist="${esc(n)}" onclick="showArtist(this.dataset.artist);return false">${esc(n)}</a>`;
+const reviewsOf = id => LS.get('reviews', []).filter(r => String(r.auctionId) === String(id));
+function renderOrder(){
+  const box = $('order-box'); box.innerHTML = '';
+  const reg = isRegular(current), ended = reg ? !!current.sold : new Date(current.ends_at) <= Date.now(), mine = user && current.last_bidder === uid();
+  if (!ended){
+    if (USE_LOCAL && mine && !reg) box.innerHTML = '<button class="ghost" onclick="endNow()">[ทดสอบ] จบการประมูลตอนนี้</button>';
+    return;
+  }
+  if (!current.last_bidder){ box.innerHTML = '<p class="muted">จบการประมูล ไม่มีผู้เสนอราคา</p>'; return; }
+  if (!mine){ box.innerHTML = '<p class="muted">' + (reg ? 'ผลงานนี้ขายแล้ว' : 'จบการประมูลแล้ว') + '</p>'; return; }
+  if (!LS.get('orders', {})[current.id]){
+    box.innerHTML = `<p>🎉 ${reg ? 'คุณเป็นผู้ซื้อ' : 'คุณชนะการประมูล'} ราคา ${baht(current.price)}</p><button onclick="openBuy()">ชำระเงิน (จำลอง)</button>
+      <p class="muted" style="font-size:.85rem;margin-top:.5rem">ยังไม่ได้เชื่อมระบบชำระเงินจริง ปุ่มนี้เพียงบันทึกว่าชำระแล้วในเบราว์เซอร์นี้</p>`;
+    return;
+  }
+  if (reviewsOf(current.id).some(r => r.user === uid())){ box.innerHTML = '<p>✅ ชำระเงินแล้ว และคุณรีวิวผลงานนี้แล้ว ขอบคุณครับ</p>'; return; }
+  reviewRating = 0;
+  box.innerHTML = `<p>✅ ชำระเงินแล้ว ให้คะแนนผลงานนี้ได้เลย</p>
+    <div id="star-input">${[1,2,3,4,5].map(n => `<button type="button" class="star" aria-label="${n} ดาว" onclick="setStar(${n})">★</button>`).join('')}</div>
+    <textarea id="review-text" rows="3" placeholder="เขียนรีวิว (ไม่บังคับ)"></textarea>
+    <button onclick="submitReview()">ส่งรีวิว</button><p class="msg" id="review-msg"></p>`;
+}
+function endNow(){ current.ends_at = new Date().toISOString(); LS.set('auctions', auctions); lastEnded = null; updateAuction(); }
+function setStar(n){
+  reviewRating = n;
+  document.querySelectorAll('#star-input .star').forEach((b, i) => b.classList.toggle('on', i < n));
+}
+function submitReview(){
+  if (!reviewRating) return say('review-msg', 'กรุณาเลือกจำนวนดาว', false);
+  if (!LS.get('orders', {})[current.id] || current.last_bidder !== uid()) return;
+  const all = LS.get('reviews', []);
+  all.push({id: Date.now(), auctionId: current.id, artist: current.artist, user: uid(), name: myName(), rating: reviewRating, text: $('review-text').value.trim(), at: Date.now()});
+  LS.set('reviews', all); renderOrder(); renderReviews();
+}
+function renderReviews(){
+  const list = reviewsOf(current.id);
+  $('rating-summary').textContent = list.length ? `${(list.reduce((t, r) => t + r.rating, 0) / list.length).toFixed(1)} ★ (${list.length})` : '';
+  $('review-list').innerHTML = list.map(r => `<div class="review"><strong>${esc(r.name)}</strong> <span class="stars-s">${stars(r.rating)}</span>${r.text ? `<p>${esc(r.text)}</p>` : ''}</div>`).join('')
+    || '<p class="muted">ยังไม่มีรีวิว (รีวิวได้เฉพาะผู้ชนะที่ชำระเงินแล้ว)</p>';
+}
+function showArtist(name){ currentArtist = name; showPage('artist'); }
+const followsOf = n => LS.get('follows', []).filter(f => f.artist === n);
+async function renderArtist(){
+  await loadAuctions();
+  const n = currentArtist = currentArtist || myName() || (artistsList()[0] || {}).name;
+  if (!n){ $('artist-name').textContent = 'ยังไม่มีศิลปิน'; $('artist-grid').innerHTML = ''; $('follow-btn').hidden = true; return; }
+  const works = auctions.filter(a => a.artist === n);
+  const rv = LS.get('reviews', []).filter(r => r.artist === n);
+  $('artist-name').textContent = n;
+  const rec = artistsList().find(a => a.name === n);
+  $('artist-id').innerHTML = rec && rec.id ? idLine(rec.id) : '';
+  $('artist-handle').textContent = '@' + n.toLowerCase().replace(/\s+/g, '_') + (artistsList().some(a => a.name === n) ? ' · ศิลปินที่ลงทะเบียน' : '');
+  $('st-works').textContent = works.length;
+  $('st-follow').textContent = new Set(followsOf(n).map(f => f.user)).size;
+  $('st-rate').textContent = rv.length ? `${(rv.reduce((t, r) => t + r.rating, 0) / rv.length).toFixed(1)} ⭐ (${rv.length})` : 'ยังไม่มีรีวิว';
+  const fb = $('follow-btn'), own = user && myName() === n;
+  fb.hidden = !!own;
+  $('tip-actions').hidden = !!own;
+  fb.textContent = user && followsOf(n).some(f => f.user === uid()) ? '♥ กำลังติดตาม' : '♡ ติดตาม';
+  $('artist-grid').innerHTML = works.map(cardHTML).join('') || '<p class="muted">ยังไม่มีผลงาน</p>';
+}
+function toggleFollow(){
+  if (!user){ showPage('login'); say('login-message', 'กรุณาเข้าสู่ระบบก่อนติดตามนักวาด', false); return; }
+  const n = currentArtist, all = LS.get('follows', []);
+  if (!n) return;
+  const has = all.some(f => f.user === uid() && f.artist === n);
+  LS.set('follows', has ? all.filter(f => !(f.user === uid() && f.artist === n)) : [...all, {user: uid(), artist: n}]);
+  renderArtist();
+}
+
+async function renderArtists(){
+  await loadAuctions();
+  $('artists-grid').innerHTML = artistsList().map(chipHTML).join('') || '<p class="muted">ยังไม่มีศิลปินที่ลงทะเบียน เข้าสู่ระบบแล้วไปที่โปรไฟล์ของฉันเพื่อลงทะเบียนเป็นศิลปินคนแรก</p>';
+}
+function renderMe(){
+  if (!user) return;
+  $('me-links').innerHTML = (isArtist() ? '<button type="button" onclick="showPage(\'dash\')">📊 แดชบอร์ดศิลปิน</button>' : '') + '<button type="button" class="ghost" onclick="showPage(\'mytips\')">🧾 ประวัติการสนับสนุนของฉัน</button>';
+  $('me-info').textContent = (user.user_metadata?.display_name || '') + ' · ' + user.email;
+  $('me-artist').innerHTML = isArtist()
+    ? `<p>✅ คุณเป็นศิลปินที่ลงทะเบียนแล้ว</p><p class="muted" style="font-size:.85rem;word-break:break-all">${idLine(artistsList().find(a => a.user === uid()).id)}<br>ให้คนอื่นนำรหัสนี้ไปวางในช่องค้นหาเพื่อหาคุณได้</p><button type="button" onclick="showArtist(myName())">ดูหน้าศิลปินของฉัน</button><button type="button" class="ghost" onclick="showPage('upload')">ลงผลงานใหม่</button>`
+    : `<p>ลงทะเบียนเป็นศิลปินเพื่อลงผลงานและเปิดประมูล</p><label for="me-bio">แนะนำตัวสั้น ๆ</label><textarea id="me-bio" rows="2" placeholder="เช่น Digital Art | Anime | OC"></textarea><button type="button" onclick="openTerms()">อ่านข้อตกลงและลงทะเบียนเป็นศิลปิน</button>`;
+}
+const TERMS_VERSION = '1.0-draft';
+function openTerms(){
+  $('terms-modal').hidden = false;
+  $('terms-scroll').scrollTop = 0;
+  $('terms-ok').checked = false; $('terms-ok').disabled = true; $('terms-go').disabled = true; $('terms-hint').hidden = false;
+  checkTermsScroll();
+}
+function checkTermsScroll(){
+  const sc = $('terms-scroll');
+  if (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 8){ $('terms-ok').disabled = false; $('terms-hint').hidden = true; }
+}
+function closeTerms(){ $('terms-modal').hidden = true; }
+function confirmTerms(){ if ($('terms-ok').checked){ registerArtist(); closeTerms(); } }
+function registerArtist(){
+  if (!$('terms-ok').checked || isArtist()) return;
+  const all = artistsList();
+  all.push({id: newId(), user: uid(), name: myName(), bio: $('me-bio').value.trim(), at: Date.now(), terms: TERMS_VERSION, agreedAt: Date.now()});
+  LS.set('artists', all);
+  say('me-message', 'ลงทะเบียนศิลปินเรียบร้อย ลงผลงานได้แล้ว', true);
+  renderMe();
+}
+
+/* ===== ข้อตกลงผู้ซื้อ: ต้องอ่านและยอมรับก่อนชำระเงิน ===== */
+const BUYER_TERMS_VERSION = '1.0-draft';
+const licenseText = a => a.license === 'commercial' ? 'อนุญาตให้ใช้เชิงพาณิชย์' : a.license === 'personal' ? 'ไม่อนุญาตให้ใช้เชิงพาณิชย์ (ส่วนบุคคลที่ไม่แสวงหารายได้)' : 'ศิลปินยังไม่ระบุ';
+function buyTermsHTML(type){
+  const auc = type === 'auction';
+  return `<h4>ข้อ 1 รายละเอียดผลงานและสิทธิการใช้งาน</h4>
+<p>1.1 หน้าผลงานแสดงชื่อผลงาน ชื่อศิลปิน ประเภทงาน (ต้นฉบับ งานพิมพ์ งานดิจิทัล งานที่สร้างด้วย AI หรือมีองค์ประกอบจากบุคคลอื่น) และรายละเอียดที่ศิลปินระบุ</p>
+<p>1.2 ศิลปินเลือกสิทธิการใช้งาน 1 ใน 2 รูปแบบ คือ ใช้เชิงพาณิชย์ได้ (ภายใต้ขอบเขตที่ศิลปินกำหนด) หรือใช้ได้เฉพาะส่วนบุคคลที่ไม่แสวงหารายได้</p>
+<p>1.3 การซื้อผลงานไม่ทำให้ผู้ซื้อได้ลิขสิทธิ์โดยอัตโนมัติ การโอนลิขสิทธิ์ต้องมีข้อตกลงแยกต่างหากที่ชัดเจน</p>
+<p>1.4 ก่อนชำระเงิน ผู้ซื้อควรอ่านรายละเอียดและขอบเขตการใช้งานของผลงานให้ชัดเจน</p>
+<h4>ข้อ 2 ราคาที่ต้องชำระ</h4>
+<p>2.1 หน้ายืนยันก่อนชำระเงินแสดงราคา${auc ? 'ประมูลสุดท้าย' : 'ผลงาน'} ค่าจัดส่ง ภาษี ค่าธรรมเนียมจากผู้ให้บริการชำระเงิน (ถ้ามี) และยอดรวม แยกเป็นรายบรรทัดชัดเจน ไม่มีค่าใช้จ่ายซ่อนเพิ่มเติมหลังจากนั้น</p>
+<p>2.2 ค่าธรรมเนียมแพลตฟอร์ม 10% หักจากส่วนของศิลปิน ไม่บวกเพิ่มจากราคาที่ผู้ซื้อเห็น</p>
+<h4>ข้อ 3 ประเภทการขาย</h4>
+<p>${auc ? '3.1 <b>ประมูล</b> การเสนอราคาเป็นการแสดงเจตนาที่ผูกพัน ผู้ชนะต้องชำระเงินภายใน [__ ชั่วโมง] หลังการประมูลสิ้นสุด ศิลปินและผู้ใช้อื่นประมูลผลงานของตนเองไม่ได้' : '3.1 <b>ซื้อทั่วไป</b> ซื้อในราคาที่ศิลปินกำหนด การชำระเงินเป็นการยืนยันคำสั่งซื้อ'}</p>
+<p>3.2 เงื่อนไขการยกเลิกและคืนเงินด้านล่างตรงกับประเภทการขายนี้เท่านั้น</p>
+<h4>ข้อ 4 การยกเลิกและคืนเงิน (${auc ? 'การประมูล' : 'การซื้อทั่วไป'})</h4>
+<table><tr><th>กรณี</th><th>คืนเงิน</th></tr>
+<tr><td>ผู้ซื้อยกเลิกเองตามเงื่อนไข${auc ? ' (ต้องได้รับอนุมัติ)' : ''}</td><td>100%</td></tr>
+<tr><td>ข้อผิดพลาดจากศิลปิน</td><td>100%</td></tr>
+<tr><td>ข้อผิดพลาดจากเว็บไซต์</td><td>100%</td></tr>
+<tr><td>ตรวจสอบแล้วพบเจตนาก่อกวนระบบ</td><td>60%</td></tr></table>
+<p>4.1 ยกเลิกได้ภายใน [__ วัน] นับจากชำระเงิน หรือก่อน ARTBID จ่ายเงินให้ศิลปินแล้วแต่กรณีใดก่อน</p>
+<p>4.2 คืนเงินผ่านช่องทางชำระเงินเดิมภายใน [__ วันทำการ] หลังอนุมัติ หากคืนไม่เต็มจำนวนจะแสดงจำนวนที่คืน จำนวนที่ไม่คืน และเหตุผลให้ทราบชัดเจน</p>
+<p>4.3 ส่วนที่ไม่คืน (เช่น 40% ในกรณีก่อกวน) เป็นรายได้ของ ARTBID</p>
+<p>4.4 เงื่อนไขนี้ไม่ใช้กับกรณีที่กฎหมายกำหนดให้คืนเงินเต็มจำนวน หรือกรณีที่เกิดจากความผิดของศิลปินหรือ ARTBID</p>
+<h4>ข้อ 5 ข้อผิดพลาดจากเว็บไซต์ ศิลปิน หรือผู้ซื้อ</h4>
+<p>5.1 <b>จากเว็บไซต์</b> เช่น เรียกเก็บเงินซ้ำ ระบบขัดข้องจนไม่ได้รับผลงาน หรือแสดงราคาผิด → คืน 100%</p>
+<p>5.2 <b>จากศิลปิน</b> เช่น ไม่ส่งมอบผลงาน ผลงานไม่ตรงรายละเอียด หรือละเมิดสิทธิผู้อื่น → คืน 100%</p>
+<p>5.3 <b>จากผู้ซื้อ</b> ขอยกเลิกตามเงื่อนไขข้อ 4.1 → คืน 100% แต่การก่อกวนระบบตามข้อ 6 → คืน 60%</p>
+<h4>ข้อ 6 นโยบายป้องกันการก่อกวนและการทุจริต</h4>
+<p>6.1 ตัวอย่างพฤติกรรมที่ถือว่าก่อกวนหรือทุจริต เช่น เสนอราคาโดยไม่มีเจตนาชำระ ปั่นราคา ใช้หลายบัญชีเพื่อประมูล สั่งซื้อแล้วขอยกเลิกซ้ำ ๆ โดยไม่มีเจตนาซื้อจริง หรือชำระเงินด้วยบัญชีหรือบัตรของผู้อื่นโดยไม่ได้รับอนุญาต</p>
+<p>6.2 ก่อนใช้อัตรา 60% ARTBID จะแจ้งเหตุผลและหลักฐาน ให้ผู้ซื้อชี้แจง และมีช่องทางอุทธรณ์ ไม่ใช้กับการทำรายการผิดโดยสุจริตหรือความผิดพลาดทางเทคนิค</p>
+<p>6.3 ARTBID อาจจำกัดหรือระงับบัญชีที่ทุจริตตามกระบวนการที่เป็นธรรม</p>
+<h4>ข้อ 7 สิทธิตามกฎหมาย</h4>
+<p>เงื่อนไขทั้งหมดไม่ตัดสิทธิผู้บริโภคที่กฎหมายกำหนด หากขัดกัน ให้ใช้ข้อที่เอื้อประโยชน์ต่อผู้ซื้อมากกว่า</p>
+<h4>ข้อ 8 การสนับสนุนศิลปิน (Tip &amp; Donate)</h4>
+<p>การสนับสนุนเป็นรายการแยกจากการซื้อผลงาน ไม่ได้รับผลงานหรือสิทธิใด ๆ และ ARTBID ไม่หักค่าธรรมเนียมแพลตฟอร์ม ยอดที่สำเร็จแล้วไม่คืนเงิน เว้นแต่เรียกเก็บซ้ำ ไม่ได้รับอนุญาต ระบบผิดพลาด หรือกฎหมายกำหนด</p>`;
+}
+function openBuy(){
+  const a = current, type = isRegular(current) ? 'regular' : 'auction';
+  $('buy-body').innerHTML = `<h3 id="buy-title">ข้อตกลงผู้ซื้อ — อ่านก่อนชำระเงิน</h3>
+    <p class="muted" style="font-size:.85rem">ฉบับร่าง เวอร์ชัน ${BUYER_TERMS_VERSION} · รอตรวจโดยผู้เชี่ยวชาญด้านกฎหมายก่อนเปิดใช้งานจริง</p>
+    <div class="warn">⚠️ ยังไม่ได้เชื่อมระบบชำระเงินจริง ขั้นตอนนี้เป็นการจำลอง ไม่มีการเรียกเก็บเงิน</div>
+    <table class="sum">
+      <tr><td>ผลงาน</td><td>${esc(a.title)}</td></tr>
+      <tr><td>ศิลปิน</td><td>${esc(a.artist)}</td></tr>
+      <tr><td>ประเภทการขาย</td><td>${type === 'auction' ? 'ประมูล' : 'ซื้อทั่วไป'}</td></tr>
+      <tr><td>ประเภทผลงาน</td><td>${esc(a.work_type || 'ศิลปินยังไม่ระบุ')}</td></tr>
+      <tr><td>สิทธิการใช้งาน</td><td>${licenseText(a)}${a.license_note ? '<br><span class="muted">' + esc(a.license_note) + '</span>' : ''}</td></tr>
+      <tr><td>${type === 'auction' ? 'ราคาประมูลสุดท้าย' : 'ราคาผลงาน'}</td><td>${baht(a.price)}</td></tr>
+      <tr><td>ค่าจัดส่ง ภาษี ค่าธรรมเนียมผู้ให้บริการ</td><td>แสดงก่อนชำระเงินจริง</td></tr>
+      <tr class="tot"><td>ยอดที่ต้องชำระ</td><td>${baht(a.price)}</td></tr>
+    </table>
+    <div class="terms" id="buy-scroll" tabindex="0" onscroll="checkBuyScroll()">${buyTermsHTML(type)}</div>
+    <p class="muted" id="buy-hint" style="font-size:.85rem">เลื่อนอ่านข้อตกลงให้สุดก่อนจึงจะติ๊กยืนยันได้</p>
+    <label><input type="checkbox" id="buy-ok" disabled style="width:auto;margin:0 .4rem 0 0" onchange="$('buy-go').disabled = !this.checked"> ข้าพเจ้าได้อ่านและยอมรับเงื่อนไขผู้ซื้อ รวมถึงสิทธิการใช้งานของผลงานนี้ และเงื่อนไขยกเลิกและคืนเงินที่ตรงกับประเภทการขายนี้แล้ว</label>
+    <button type="button" class="full" id="buy-go" disabled onclick="confirmBuy()">ยืนยันชำระเงิน (จำลอง)</button>`;
+  $('buy-modal').hidden = false;
+  checkBuyScroll();
+}
+function checkBuyScroll(){
+  const sc = $('buy-scroll');
+  if (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 8){ $('buy-ok').disabled = false; $('buy-hint').hidden = true; }
+}
+function closeBuy(){ $('buy-modal').hidden = true; }
+function confirmBuy(){
+  if (!$('buy-ok').checked) return;
+  const o = LS.get('orders', {});
+  o[current.id] = {buyer: uid(), at: Date.now(), price: current.price, terms: BUYER_TERMS_VERSION, agreedAt: Date.now()};
+  LS.set('orders', o);
+  if (isRegular(current)){ current.sold = true; current.last_bidder = uid(); LS.set('auctions', auctions); updateAuction(); }
+  closeBuy(); renderOrder();
+}
+
+/* ===== Tip & Donate =====
+   PAYMENTS_READY ต้องเป็น false จนกว่าจะเชื่อมผู้ให้บริการชำระเงินจริง + ตรวจสอบฝั่งเซิร์ฟเวอร์
+   ปุ่มชำระเงินจะใช้ไม่ได้ และไม่มีการสร้างรายการเงินจำลอง */
+const PAYMENTS_READY = false;
+const TIP_MIN = 20, TIP_MAX = 50000, TIP_PRESETS = [20, 50, 100, 500];
+let tipState = null;
+const ledger = () => LS.get('tips', []);
+const fmtDate = t => new Date(t).toLocaleDateString('th-TH', {day: 'numeric', month: 'short', year: 'numeric'});
+const TX_STATUS = {succeeded: '✅ สำเร็จ', pending: '⏳ รอยืนยัน', failed: '❌ ไม่สำเร็จ'};
+const notReady = () => PAYMENTS_READY ? '' : '<div class="warn">⚠️ ระบบชำระเงินยังไม่พร้อมใช้งาน ตอนนี้ยังไม่มีการเรียกเก็บเงินและยังส่งเงินสนับสนุนไม่ได้</div>';
+function openTip(type){
+  if (!user){ showPage('login'); say('login-message', 'กรุณาเข้าสู่ระบบก่อนส่งเงินสนับสนุน', false); return; }
+  if (!currentArtist || myName() === currentArtist) return;
+  tipState = {type, artist: currentArtist, amount: 0, msg: '', step: 'form'};
+  $('tip-modal').hidden = false; renderTip();
+}
+function closeTip(){ $('tip-modal').hidden = true; tipState = null; }
+function setAmt(n){
+  tipState.amount = n; $('tip-amt').value = n;
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.n === String(n)));
+}
+function tipNext(){
+  const a = tipState.amount;
+  if (!Number.isInteger(a) || a < TIP_MIN || a > TIP_MAX) return say('tip-err', `กรุณาระบุจำนวนเงินเต็มบาท ระหว่าง ${baht(TIP_MIN)} - ${baht(TIP_MAX)}`, false);
+  tipState.step = 'review'; renderTip();
+}
+function renderTip(){
+  const s = tipState, b = $('tip-body'), name = s.type === 'donate' ? '🎁 Donate' : '💝 Tip';
+  if (s.step === 'form'){
+    b.innerHTML = `<h3 id="tip-title">${name} ให้ ${esc(s.artist)}</h3>
+      <p class="muted">${s.type === 'donate' ? 'สนับสนุนการทำงานของศิลปินโดยทั่วไป' : 'ส่งเป็นกำลังใจให้ศิลปินหรือผลงาน'} · ไม่ใช่การซื้อผลงาน · ARTBID ไม่หักค่าธรรมเนียม (0%)</p>
+      ${notReady()}
+      <label>เลือกจำนวนเงิน (บาท)</label>
+      <div class="chip-row">${TIP_PRESETS.map(n => `<button type="button" class="chip${s.amount === n ? ' on' : ''}" data-n="${n}" onclick="setAmt(${n})">฿${n}</button>`).join('')}</div>
+      <input id="tip-amt" type="number" min="${TIP_MIN}" max="${TIP_MAX}" step="1" inputmode="numeric" placeholder="หรือกรอกจำนวนเงินเอง" value="${s.amount || ''}" oninput="tipState.amount = Number(this.value)">
+      <label for="tip-msg">ข้อความถึงศิลปิน (ไม่บังคับ)</label>
+      <textarea id="tip-msg" rows="2" maxlength="200" placeholder="เว้นว่างได้ หากไม่ต้องการระบุข้อความ" oninput="tipState.msg = this.value">${esc(s.msg)}</textarea>
+      <p class="msg" id="tip-err"></p>
+      <button type="button" class="full" onclick="tipNext()">ตรวจสอบรายการ</button>`;
+  } else if (s.step === 'review'){
+    b.innerHTML = `<h3 id="tip-title">ยืนยันรายการ</h3>${notReady()}
+      <table class="sum">
+        <tr><td>ศิลปิน</td><td>${esc(s.artist)}</td></tr>
+        <tr><td>ประเภท</td><td>${name}</td></tr>
+        <tr><td>จำนวนเงิน</td><td>${baht(s.amount)}</td></tr>
+        <tr><td>ค่าธรรมเนียมแพลตฟอร์ม ARTBID (0%)</td><td>${baht(0)}</td></tr>
+        <tr><td>ค่าธรรมเนียมผู้ให้บริการชำระเงิน</td><td>แสดงก่อนชำระเงิน (ผู้ส่งเป็นผู้รับผิดชอบ)</td></tr>
+        <tr class="tot"><td>ยอดที่ศิลปินได้รับ</td><td>${baht(s.amount)}</td></tr>
+      </table>
+      <p class="muted">ข้อความ: ${s.msg.trim() ? esc(s.msg.trim()) : 'ไม่ระบุข้อความ'}</p>
+      <p class="muted" style="font-size:.85rem">เงินสนับสนุนที่สำเร็จแล้วไม่คืนเงิน ยกเว้นเรียกเก็บซ้ำ ไม่ได้รับอนุญาต ระบบผิดพลาด หรือกฎหมายกำหนด</p>
+      <label><input type="checkbox" id="tip-ok" style="width:auto;margin:0 .4rem 0 0" onchange="$('tip-pay').disabled = !(PAYMENTS_READY && this.checked)"> ฉันตรวจสอบรายการและยอมรับเงื่อนไขแล้ว</label>
+      <button type="button" class="full" id="tip-pay" disabled onclick="confirmTip()">${PAYMENTS_READY ? 'ยืนยันชำระเงิน' : 'ยังไม่พร้อมใช้งาน'}</button>
+      <button type="button" class="full ghost" onclick="tipState.step = 'form'; renderTip()">แก้ไขรายการ</button>`;
+  } else {
+    const tx = s.result, ok = tx.status === 'succeeded';
+    b.innerHTML = `<h3 id="tip-title">${ok ? '✅ ชำระเงินสำเร็จ' : tx.status === 'pending' ? '⏳ รอการยืนยันจากผู้ให้บริการ' : '❌ ชำระเงินไม่สำเร็จ'}</h3>
+      <table class="sum">
+        <tr><td>ศิลปิน</td><td>${esc(tx.artist)}</td></tr><tr><td>ประเภท</td><td>${esc(tx.type === 'donate' ? 'Donate' : 'Tip')}</td></tr>
+        <tr><td>จำนวนเงิน</td><td>${baht(tx.amount)}</td></tr>${tx.id ? `<tr><td>เลขอ้างอิง</td><td>${esc(tx.id)}</td></tr>` : ''}
+      </table>
+      ${ok ? '<p class="muted">ขอบคุณที่สนับสนุนศิลปิน ดูรายการได้ที่ประวัติการสนับสนุนของฉัน</p>' : tx.status === 'pending' ? '<p class="muted">ยังไม่ถือว่าสำเร็จจนกว่าจะได้รับการยืนยัน ตรวจสอบสถานะได้ที่ประวัติการสนับสนุนของฉัน</p>' : `<p class="msg err">${esc(tx.reason || 'ไม่สามารถชำระเงินได้ ยังไม่มีการตัดเงิน กรุณาลองใหม่')}</p>`}
+      <button type="button" class="full" onclick="closeTip()">ปิด</button>`;
+  }
+}
+/* ต้องเชื่อมผู้ให้บริการจริง: สร้างรายการ + ยืนยันผลผ่านเซิร์ฟเวอร์/webhook แล้วคืนค่า {id, status} ที่ไม่ได้มาจากฝั่งเบราว์เซอร์เอง */
+async function startCheckout(){ throw new Error('ยังไม่ได้เชื่อมต่อผู้ให้บริการชำระเงิน'); }
+async function confirmTip(){
+  if (!PAYMENTS_READY || !$('tip-ok').checked) return;
+  const s = tipState;
+  try { const r = await startCheckout({type: s.type, artist: s.artist, amount: s.amount, message: s.msg.trim()}); s.result = {...r, type: s.type, artist: s.artist, amount: s.amount}; }
+  catch (e){ s.result = {status: 'failed', reason: e.message, type: s.type, artist: s.artist, amount: s.amount}; }
+  s.step = 'result'; renderTip();
+}
+function txRow(t, forArtist){
+  const pay = t.status === 'succeeded' ? (t.payout === 'paid' ? ' · จ่ายแล้ว' : ' · รอจ่าย (รอบวันที่ 1–5)') : '';
+  return `<div class="tx"><div><strong>${baht(t.amount)}</strong> ${t.type === 'donate' ? 'Donate' : 'Tip'} ${forArtist ? 'จาก ' + esc(t.fromName || 'ผู้สนับสนุน') : 'ให้ ' + esc(t.artist)}
+    ${t.message ? `<p class="muted">“${esc(t.message)}”</p>` : ''}</div><div class="muted">${fmtDate(t.at)} · ${TX_STATUS[t.status] || ''}${pay}</div></div>`;
+}
+function renderDash(){
+  const mine = ledger().filter(t => t.artist === myName()), ok = mine.filter(t => t.status === 'succeeded');
+  const sum = a => a.reduce((x, t) => x + t.amount, 0);
+  $('d-recv').textContent = baht(sum(ok));
+  $('d-pend').textContent = baht(sum(ok.filter(t => t.payout !== 'paid')));
+  $('d-paid').textContent = baht(sum(ok.filter(t => t.payout === 'paid')));
+  $('dash-warn').textContent = PAYMENTS_READY ? 'ยอดคำนวณจากรายการที่ผู้ให้บริการชำระเงินยืนยันแล้วเท่านั้น' : 'ระบบชำระเงินยังไม่พร้อมใช้งาน จึงยังไม่มีรายการรับเงินสนับสนุน ตัวเลขด้านล่างจะเป็น ฿0 จนกว่าจะเชื่อมระบบจริง';
+  $('dash-list').innerHTML = mine.map(t => txRow(t, true)).join('') || '<p class="muted">ยังไม่มีรายการ</p>';
+}
+function renderMyTips(){
+  $('mytips-list').innerHTML = ledger().filter(t => t.from === uid()).map(t => txRow(t, false)).join('') || '<p class="muted">ยังไม่มีประวัติการสนับสนุน</p>';
+}
+
+/* ค้นหา + นับถอยหลังทุกการ์ด */
+$('q').addEventListener('input', () => { if ($('page-gallery').classList.contains('active')) renderGrid(); });
+$('q').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const q = $('q').value.trim().toLowerCase(), hit = q && artistsList().find(a => (a.id || '').toLowerCase() === q);
+  if (hit) showArtist(hit.name); else showPage('gallery');
+});
+setInterval(() => document.querySelectorAll('.cd').forEach(el => { el.textContent = fmt(new Date(el.dataset.end) - Date.now()); }), 1000);
+
+/* ศิลปินที่ลงทะเบียนไว้ก่อนหน้า: เติมรหัสศิลปินให้ */
+{ const all = LS.get('artists', []); if (all.some(a => !a.id)){ all.forEach(a => { if (!a.id) a.id = newId(); }); LS.set('artists', all); } }
+
+/* เริ่มต้น */
+showPage(location.hash.slice(1) && $('page-' + location.hash.slice(1)) ? location.hash.slice(1) : 'home');
+
+/* ===== SQL สำหรับ Supabase (รันใน SQL Editor) =====
+create table auctions (
+  id uuid primary key default gen_random_uuid(),
+  title text not null, description text, artist text, artist_id uuid references auth.users,
+  price numeric not null, image_url text, ends_at timestamptz not null,
+  last_bidder uuid references auth.users
+);
+alter table auctions enable row level security;
+create policy "ใครก็ดูได้" on auctions for select using (true);
+create policy "เจ้าของลงผลงาน" on auctions for insert with check (auth.uid() = artist_id);
+
+create function place_bid(p_auction_id uuid, p_amount numeric) returns numeric
+language plpgsql security definer as $$
+declare a auctions;
+begin
+  if auth.uid() is null then raise exception 'ต้องเข้าสู่ระบบ'; end if;
+  select * into a from auctions where id = p_auction_id for update;
+  if a.ends_at <= now() then raise exception 'การประมูลจบแล้ว'; end if;
+  if p_amount <= a.price then raise exception 'ราคาต้องสูงกว่าราคาปัจจุบัน'; end if;
+  update auctions set price = p_amount, last_bidder = auth.uid() where id = p_auction_id;
+  return p_amount;
+end $$;
+
+-- Storage: สร้าง bucket ชื่อ artworks (public) และตั้ง policy ให้ผู้ใช้ที่ล็อกอินอัปโหลดได้
+*/
+</script>
+</body>
+</html>
